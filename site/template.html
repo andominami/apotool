@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>保険算定ルール検索</title>
+<meta name="description" content="歯科の保険算定・カルテ入力で間違いやすいルールをキーワードで検索できる社内リファレンス">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDGothic:wght@400;700&display=swap');
+
+  :root {
+    --bg: #F3F7F6;
+    --surface: #FFFFFF;
+    --surface-2: #E9F1EF;
+    --border: #DCE6E3;
+    --border-strong: #C2D3CF;
+    --ink: #142523;
+    --ink-muted: #5A7370;
+    --ink-faint: #8AA19D;
+    --accent: #0C6E63;
+    --accent-strong: #075047;
+    --accent-soft: #DCEEEA;
+    --accent-on: #FFFFFF;
+    --risk-bg: #FBE9D6;
+    --risk-ink: #8A4A0F;
+    --hit-bg: #FFE27A;
+    --hit-ink: #4A3900;
+    --shadow: 0 1px 2px rgba(15, 40, 36, 0.06), 0 6px 20px -8px rgba(15, 40, 36, 0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0D1613;
+      --surface: #15211D;
+      --surface-2: #1C2B26;
+      --border: #2A3B35;
+      --border-strong: #3A5049;
+      --ink: #E9F3F0;
+      --ink-muted: #9BB5AF;
+      --ink-faint: #6E8983;
+      --accent: #55C9B6;
+      --accent-strong: #86DDCC;
+      --accent-soft: #1B332E;
+      --accent-on: #06201B;
+      --risk-bg: #3B2A16;
+      --risk-ink: #F0B876;
+      --hit-bg: #6B5A16;
+      --hit-ink: #FBEEB0;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0D1613;
+    --surface: #15211D;
+    --surface-2: #1C2B26;
+    --border: #2A3B35;
+    --border-strong: #3A5049;
+    --ink: #E9F3F0;
+    --ink-muted: #9BB5AF;
+    --ink-faint: #6E8983;
+    --accent: #55C9B6;
+    --accent-strong: #86DDCC;
+    --accent-soft: #1B332E;
+    --accent-on: #06201B;
+    --risk-bg: #3B2A16;
+    --risk-ink: #F0B876;
+    --hit-bg: #6B5A16;
+    --hit-ink: #FBEEB0;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "BIZ UDPGothic", "Hiragino Sans", "Yu Gothic", sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--hit-bg); color: var(--hit-ink); }
+
+  h1, h2 {
+    font-family: "Zen Kaku Gothic New", "BIZ UDPGothic", sans-serif;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .app {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 20px 64px;
+  }
+
+  /* ---- Top bar ---- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    padding-top: 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    font-family: "BIZ UDGothic", monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin: 0 0 8px;
+    font-weight: 700;
+  }
+
+  h1 {
+    font-size: clamp(24px, 4.4vw, 32px);
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+  }
+
+  .lede {
+    margin: 8px 0 20px;
+    color: var(--ink-muted);
+    font-size: 14.5px;
+    max-width: 56ch;
+  }
+
+  .search-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s ease;
+  }
+
+  .search-row:focus-within {
+    border-color: var(--accent);
+  }
+
+  .search-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-left: 16px;
+    color: var(--ink-faint);
+  }
+
+  #search {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 14px 8px 14px 10px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--ink);
+    min-width: 0;
+  }
+
+  #search::placeholder { color: var(--ink-faint); }
+
+  #clearSearch {
+    flex: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--ink-faint);
+    width: 40px;
+    height: 40px;
+    margin-right: 4px;
+    border-radius: 8px;
+    font-size: 18px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #clearSearch:hover { background: var(--surface-2); color: var(--ink); }
+  #clearSearch.visible { display: flex; }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-family: "BIZ UDGothic", monospace;
+  }
+
+  .meta-row strong {
+    color: var(--accent-strong);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #sortToggle {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font-family: "BIZ UDGothic", monospace;
+    font-size: 12.5px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+
+  #sortToggle:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+  .chip-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 14px 2px 4px;
+    scrollbar-width: thin;
+  }
+
+  .chip {
+    flex: none;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink-muted);
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--ink); }
+
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-on);
+    font-weight: 700;
+  }
+
+  .chip .count {
+    opacity: 0.7;
+    font-family: "BIZ UDGothic", monospace;
+    margin-left: 3px;
+  }
+
+  /* ---- Results ---- */
+  main { padding-top: 18px; }
+
+  .card-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .card-no {
+    font-family: "BIZ UDGothic", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .card-date {
+    font-family: "BIZ UDGothic", monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .card-tag {
+    font-family: "BIZ UDGothic", monospace;
+    font-size: 11.5px;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  .card-title {
+    font-family: "Zen Kaku Gothic New", "BIZ UDPGothic", sans-serif;
+    font-weight: 700;
+    font-size: 16.5px;
+    margin: 2px 0 8px;
+    color: var(--ink);
+  }
+
+  .card-body {
+    font-size: 14.5px;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+
+  mark.hit {
+    background: var(--hit-bg);
+    color: var(--hit-ink);
+    padding: 0 2px;
+    border-radius: 3px;
+  }
+
+  span.risk {
+    background: var(--risk-bg);
+    color: var(--risk-ink);
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--ink-muted);
+    padding: 64px 20px;
+    font-size: 14.5px;
+    display: none;
+  }
+
+  .empty.visible { display: block; }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    color: var(--ink-faint);
+    font-size: 12px;
+    font-family: "BIZ UDGothic", monospace;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  @media (max-width: 520px) {
+    .app { padding: 0 14px 48px; }
+    .card { padding: 13px 14px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <p class="eyebrow">歯科保険算定 &middot; ルールリファレンス</p>
+    <h1>保険算定ルール検索</h1>
+    <p class="lede">入力ミスや返戻につながりやすい算定ルール・カルテ記載の注意点を、キーワードでその場で引ける社内リファレンスです。</p>
+
+    <div class="search-row">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input id="search" type="text" autocomplete="off" placeholder="キーワードで検索 (例: SPT, パノラマ, 返戻, ナイトガード)" aria-label="キーワード検索">
+      <button id="clearSearch" type="button" aria-label="検索をクリア">&times;</button>
+    </div>
+
+    <div class="meta-row">
+      <span><strong id="matchCount">67</strong>&nbsp;/&nbsp;<span id="totalCount">67</span> 件を表示</span>
+      <button id="sortToggle" type="button">新しい順</button>
+    </div>
+
+    <div class="chip-row" id="chipRow"></div>
+  </header>
+
+  <main>
+    <ul class="card-list" id="list"></ul>
+    <p class="empty" id="empty">該当するルールが見つかりませんでした。キーワードや絞り込みを変えてお試しください。</p>
+  </main>
+
+  <footer>
+    <span>収録 <span id="footTotal">67</span> 件 &middot; 出典: 保険算定ルール一覧 (社内エクセル)</span>
+    <span class="legend"><span class="risk" style="padding:1px 6px;">返戻・査定・指導 等</span>&nbsp;は注意ワードとして強調表示</span>
+  </footer>
+</div>
+
+<script>
+  const DATA = __DATA_JSON__;
+
+  const listEl = document.getElementById('list');
+  const emptyEl = document.getElementById('empty');
+  const searchEl = document.getElementById('search');
+  const clearBtn = document.getElementById('clearSearch');
+  const matchCountEl = document.getElementById('matchCount');
+  const totalCountEl = document.getElementById('totalCount');
+  const footTotalEl = document.getElementById('footTotal');
+  const chipRowEl = document.getElementById('chipRow');
+  const sortToggleEl = document.getElementById('sortToggle');
+
+  const RISK_TERMS = ['返戻', '査定', '指導', '注意', '中止'];
+
+  let activeGroup = null;   // カテゴリ大分類での絞り込み
+  let sortDesc = true;      // true: 新しい順
+
+  function groupOf(category) {
+    if (!category) return '未分類';
+    const i = category.indexOf('(');
+    return i === -1 ? category : category.slice(0, i);
+  }
+
+  function parseDate(d) {
+    const m = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(d || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : null;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function escapeRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // タグの外側(プレーンテキスト部分)にのみ検索キーワードの <mark> を適用する
+  function highlightOutsideTags(html, terms) {
+    if (!terms.length) return html;
+    return html.replace(/<[^>]+>|[^<]+/g, (chunk) => {
+      if (chunk.charAt(0) === '<') return chunk;
+      let out = chunk;
+      for (const t of terms) {
+        if (!t) continue;
+        out = out.replace(new RegExp(escapeRegex(t), 'gi'), (m) => '<mark class="hit">' + m + '</mark>');
+      }
+      return out;
+    });
+  }
+
+  function renderContent(text, queryTerms) {
+    let html = escapeHtml(text || '');
+    const riskRe = new RegExp(RISK_TERMS.map(escapeRegex).join('|'), 'g');
+    html = html.replace(riskRe, (m) => '<span class="risk">' + m + '</span>');
+    html = highlightOutsideTags(html, queryTerms);
+    return html;
+  }
+
+  function buildChips() {
+    const counts = new Map();
+    for (const row of DATA) {
+      const g = groupOf(row.category);
+      counts.set(g, (counts.get(g) || 0) + 1);
+    }
+    const groups = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+
+    chipRowEl.innerHTML = '';
+    const allChip = makeChip('すべて', DATA.length, null);
+    chipRowEl.appendChild(allChip);
+    for (const [g, c] of groups) {
+      chipRowEl.appendChild(makeChip(g, c, g));
+    }
+  }
+
+  function makeChip(label, count, value) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip' + (activeGroup === value ? ' active' : '');
+    btn.innerHTML = escapeHtml(label) + '<span class="count">' + count + '</span>';
+    btn.addEventListener('click', () => {
+      activeGroup = (activeGroup === value) ? null : value;
+      render();
+    });
+    return btn;
+  }
+
+  function render() {
+    const raw = searchEl.value.trim();
+    clearBtn.classList.toggle('visible', raw.length > 0);
+    const terms = raw.split(/\s+/).filter(Boolean);
+
+    let rows = DATA.filter((row) => {
+      if (activeGroup && groupOf(row.category) !== activeGroup) return false;
+      if (!terms.length) return true;
+      const hay = (row.category + ' ' + row.title + ' ' + row.content).toLowerCase();
+      return terms.every((t) => hay.includes(t.toLowerCase()));
+    });
+
+    rows = rows.slice().sort((a, b) => {
+      const da = parseDate(a.date);
+      const db = parseDate(b.date);
+      if (da === null && db === null) return b.no - a.no;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      const diff = da - db;
+      return sortDesc ? -diff : diff;
+    });
+
+    matchCountEl.textContent = rows.length;
+    listEl.innerHTML = '';
+    emptyEl.classList.toggle('visible', rows.length === 0);
+
+    const frag = document.createDocumentFragment();
+    for (const row of rows) {
+      const li = document.createElement('li');
+      li.className = 'card';
+      const titleHtml = highlightOutsideTags(escapeHtml(row.title || ''), terms);
+      const bodyHtml = renderContent(row.content, terms);
+      li.innerHTML =
+        '<div class="card-head">' +
+          '<span class="card-tag">' + escapeHtml(row.category || '未分類') + '</span>' +
+          '<span class="card-date">' + escapeHtml(row.date || '日付不明') + '</span>' +
+          '<span class="card-no">No.' + row.no + '</span>' +
+        '</div>' +
+        '<h2 class="card-title">' + titleHtml + '</h2>' +
+        '<p class="card-body">' + bodyHtml + '</p>';
+      frag.appendChild(li);
+    }
+    listEl.appendChild(frag);
+  }
+
+  searchEl.addEventListener('input', render);
+  clearBtn.addEventListener('click', () => {
+    searchEl.value = '';
+    searchEl.focus();
+    render();
+  });
+  sortToggleEl.addEventListener('click', () => {
+    sortDesc = !sortDesc;
+    sortToggleEl.textContent = sortDesc ? '新しい順' : '古い順';
+    render();
+  });
+
+  totalCountEl.textContent = DATA.length;
+  footTotalEl.textContent = DATA.length;
+  buildChips();
+  render();
+</script>
+</body>
+</html>
