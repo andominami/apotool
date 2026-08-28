@@ -1,1 +1,58 @@
-# apotool
+# 保険算定ルールノート (apotool)
+
+歯科医院の保険算定で**間違えやすいルール**をキーワード検索してすぐ読めるようにする、
+ビルド不要の静的サイトです。GitHub Pages でそのまま公開できます。
+
+## サイトの機能
+
+- キーワード検索（タイトル・カテゴリ・本文を対象、スペース区切りでAND検索）
+- カテゴリ（大分類）での絞り込み
+- 検索語のハイライト表示
+- 各ルールへの直接リンク（`#rule-001` のような URL で共有可能）
+- 新しい順 / 古い順 / No.順の並び替え
+
+## 使い方（ローカル確認）
+
+ビルド不要です。リポジトリ直下で簡易サーバーを立てて `index.html` を開くだけで動作します。
+
+```bash
+python3 -m http.server 8000
+# http://localhost:8000 を開く
+```
+
+（`fetch` で `data/rules.json` を読み込むため、`file://` で直接開くとブラウザによっては
+CORS エラーになります。必ずローカルサーバー経由で確認してください。）
+
+## ディレクトリ構成
+
+```
+index.html            サイト本体（1ページのみ）
+assets/style.css       スタイル
+assets/app.js          検索・フィルタ・詳細表示のロジック
+data/rules.json         表示用データ（サイトが実際に読み込むファイル）
+data/source.xlsx        元データ（保険算定ルール一覧シート）
+scripts/xlsx_to_json.py  source.xlsx → rules.json の変換スクリプト
+.github/workflows/pages.yml  GitHub Pages への自動デプロイ設定
+```
+
+## ルールを追加・更新する方法
+
+1. `data/source.xlsx` の「保険算定ルール一覧」シートに行を追加する
+   （列: No / 日付 / カテゴリ / タイトル / 内容(ルール詳細)）。
+2. 変換スクリプトを実行して `data/rules.json` を再生成する。
+
+   ```bash
+   pip install openpyxl
+   python3 scripts/xlsx_to_json.py
+   ```
+
+3. 差分を確認して commit / push する。
+
+`data/rules.json` を直接編集しても構いません（各項目は
+`no`, `id`, `date`, `category`, `group`, `title`, `detail` を持つ JSON 配列です）。
+
+## GitHub Pages で公開する
+
+1. GitHub のリポジトリ設定 → **Settings → Pages** を開く。
+2. **Source** を `GitHub Actions` に設定する。
+3. `main` ブランチに push すると `.github/workflows/pages.yml` が自動でデプロイする。
