@@ -307,11 +307,12 @@ button {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   overflow: hidden;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .rule-card:hover {
-  border-color: var(--color-accent);
+  border-color: var(--color-accent-dark);
+  box-shadow: 0 2px 10px rgba(79, 122, 36, 0.18);
 }
 
 .rule-card-btn {
