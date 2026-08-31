@@ -121,10 +121,16 @@ function onFormSubmit(e) {
   // そこへ移動(共有ドライブの容量として扱われる)、無ければ完全に削除する。
   const backupFolderId = props.getProperty("DRIVE_BACKUP_FOLDER_ID");
   driveFileIdsToClean.forEach((fileId) => {
-    if (backupFolderId) {
-      moveDriveFileToFolder(fileId, backupFolderId);
-    } else {
-      permanentlyDeleteDriveFile(fileId);
+    try {
+      if (backupFolderId) {
+        moveDriveFileToFolder(fileId, backupFolderId);
+      } else {
+        permanentlyDeleteDriveFile(fileId);
+      }
+    } catch (err) {
+      // サイトへの反映は既に成功しているので、ここで失敗してもフォーム投稿自体は
+      // 成功として扱う。実行ログにだけ残しておく。
+      console.error(`ドライブの後片付けに失敗(fileId=${fileId}): ${err}`);
     }
   });
 }
@@ -182,11 +188,36 @@ function uploadPhotos(owner, repo, token, ruleId, photoAnswer) {
 /**
  * ドライブのファイルを指定フォルダ(共有ドライブでも可)へ移動する。
  * マイドライブから外れるので、個人の容量からは消費しなくなる。
+ *
+ * DriveApp(Apps Scriptの標準サービス)は共有ドライブをきちんとサポートしていないため、
+ * Drive APIを直接(supportsAllDrives=trueを付けて)呼び出す。
  */
 function moveDriveFileToFolder(fileId, destFolderId) {
-  const file = DriveApp.getFileById(fileId);
-  const destFolder = DriveApp.getFolderById(destFolderId);
-  file.moveTo(destFolder);
+  const token = ScriptApp.getOAuthToken();
+  const headers = { Authorization: `Bearer ${token}` };
+
+  // 現在の親フォルダを取得(移動時にremoveParentsとして外すため)
+  const metaRes = UrlFetchApp.fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?fields=parents&supportsAllDrives=true`,
+    { headers, muteHttpExceptions: true }
+  );
+  let removeParents = "";
+  if (metaRes.getResponseCode() === 200) {
+    const meta = JSON.parse(metaRes.getContentText());
+    removeParents = (meta.parents || []).join(",");
+  }
+
+  const params =
+    `addParents=${encodeURIComponent(destFolderId)}` +
+    (removeParents ? `&removeParents=${encodeURIComponent(removeParents)}` : "") +
+    `&supportsAllDrives=true`;
+  const res = UrlFetchApp.fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?${params}`,
+    { method: "patch", headers, muteHttpExceptions: true }
+  );
+  if (res.getResponseCode() !== 200) {
+    throw new Error(`ドライブファイルの移動に失敗しました: ${res.getContentText()}`);
+  }
 }
 
 /** ドライブのファイルをゴミ箱を経由せず完全に削除する(容量をすぐに解放するため) */
