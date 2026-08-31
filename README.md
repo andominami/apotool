@@ -63,6 +63,11 @@ scripts/xlsx_to_json.py  source.xlsx → rules.json の変換スクリプト
 Claude（Claude Code）のチャットで「このルールを追加して」と、ルールの文章や
 写真をそのまま送ってもらえれば、代わりにサイトへの反映・公開まで対応できます。
 
+### Googleフォームからスタッフが直接投稿する
+
+`automation/` に、Googleフォームの回答を自動で `data/rules.json` に反映する
+Apps Scriptと設定手順を用意しています。詳しくは `automation/README.md` を参照。
+
 ## GitHub Pages で公開する
 
 1. GitHub のリポジトリ設定 → **Settings → Pages** を開く。
