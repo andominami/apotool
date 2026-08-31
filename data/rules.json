@@ -688,5 +688,17 @@
     "title": "テスト【安藤】",
     "detail": "テスト投稿です",
     "images": []
+  },
+  {
+    "no": 69,
+    "id": "rule-069",
+    "date": "2026/08/31",
+    "category": "カルテ入力",
+    "group": "カルテ入力",
+    "title": "テスト２【安藤】",
+    "detail": "テスト投稿２",
+    "images": [
+      "assets/photos/rule-069-1.jpg"
+    ]
   }
 ]
