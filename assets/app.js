@@ -10,10 +10,10 @@
 
   const state = {
     rules: [],
-    groups: [],
     query: "",
     activeGroup: "all",
     sort: "date-desc",
+    view: "current", // "current" | "archived"
   };
 
   const els = {
@@ -33,6 +33,7 @@
     postForm: document.getElementById("post-form"),
     postPassword: document.getElementById("post-password"),
     postError: document.getElementById("post-error"),
+    viewTabs: document.querySelectorAll(".view-tab"),
   };
 
   function parseDate(d) {
@@ -96,8 +97,17 @@
     return groups;
   }
 
+  // 現在の表示モード(現在の情報 / アーカイブ)で絞り込んだルール一覧
+  function viewRules() {
+    return state.rules.filter((r) =>
+      state.view === "archived" ? !!r.archived : !r.archived
+    );
+  }
+
   function renderSidebar() {
-    const items = [["all", "すべて", state.rules.length], ...state.groups.map(
+    const rules = viewRules();
+    const groups = computeGroups(rules);
+    const items = [["all", "すべて", rules.length], ...groups.map(
       ([name, count]) => [name, name, count]
     )];
 
@@ -116,7 +126,7 @@
 
   function getFiltered() {
     const terms = getTerms();
-    let list = state.rules.filter((r) => {
+    let list = viewRules().filter((r) => {
       const groupOk = state.activeGroup === "all" || r.group === state.activeGroup;
       return groupOk && matchesQuery(r, terms);
     });
@@ -149,6 +159,10 @@
 
     els.emptyState.hidden = list.length !== 0;
     els.ruleList.hidden = list.length === 0;
+    els.emptyState.textContent =
+      state.view === "archived" && !state.query.trim()
+        ? "アーカイブされたルールはまだありません。"
+        : "該当するルールが見つかりませんでした。別のキーワードで検索してください。";
 
     els.ruleList.innerHTML = list
       .map((rule) => {
@@ -265,6 +279,21 @@
       renderList();
     });
 
+    els.viewTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        if (state.view === tab.dataset.view) return;
+        state.view = tab.dataset.view;
+        state.activeGroup = "all"; // 表示を切り替えたらカテゴリ絞り込みはリセット
+        els.viewTabs.forEach((t) => {
+          const isActive = t === tab;
+          t.classList.toggle("active", isActive);
+          t.setAttribute("aria-selected", String(isActive));
+        });
+        renderSidebar();
+        renderList();
+      });
+    });
+
     els.ruleList.addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-id]");
       if (!btn) return;
@@ -350,7 +379,6 @@
       return;
     }
 
-    state.groups = computeGroups(state.rules);
     renderSidebar();
     renderList();
     handleHash();

@@ -72,10 +72,22 @@ def write_rule_images(rule_no: int, images: list) -> list:
     return paths
 
 
+def load_existing_archived_flags() -> dict:
+    """既存のrules.jsonから、ルールNoごとのarchived状態を読み取る(再生成時に維持するため)。"""
+    if not DST.exists():
+        return {}
+    try:
+        existing = json.loads(DST.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return {r["no"]: bool(r.get("archived", False)) for r in existing}
+
+
 def main() -> None:
     wb = openpyxl.load_workbook(SRC, data_only=True)
     ws = wb["保険算定ルール一覧"]
     images_by_rule = extract_images_by_rule(ws)
+    archived_flags = load_existing_archived_flags()
 
     rows = []
     for row in ws.iter_rows(min_row=2, values_only=True):
@@ -97,6 +109,9 @@ def main() -> None:
                 "title": title,
                 "detail": detail,
                 "images": images,
+                # data/rules.json 上で直接archivedをtrueにしたルールは、
+                # このスクリプトを再実行してもアーカイブ状態を維持する。
+                "archived": archived_flags.get(no, False),
             }
         )
 
