@@ -702,5 +702,17 @@
     "images": [
       "assets/photos/rule-069-1.jpg"
     ]
+  },
+  {
+    "no": 70,
+    "id": "rule-070",
+    "date": "2026/08/31",
+    "category": "レントゲン撮影",
+    "group": "レントゲン撮影",
+    "title": "テスト3【安藤】",
+    "detail": "テスト3です",
+    "images": [
+      "assets/photos/rule-070-1.jpg"
+    ]
   }
 ]
