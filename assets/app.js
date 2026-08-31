@@ -140,11 +140,13 @@
     els.ruleList.innerHTML = list
       .map((rule) => {
         const snippet = snippetFor(rule, terms);
+        const hasPhoto = rule.images && rule.images.length > 0;
         return `<li class="rule-card">
           <button type="button" class="rule-card-btn" data-id="${rule.id}">
             <div class="rule-meta">
               <span class="rule-badge">${escapeHtml(rule.group)}</span>
               <span class="rule-date">${escapeHtml(rule.date || "")}</span>
+              ${hasPhoto ? '<span class="rule-photo-badge">📷 写真あり</span>' : ""}
             </div>
             <p class="rule-title">${highlight(rule.title, terms)}</p>
             <p class="rule-snippet">${highlight(snippet, terms)}</p>
@@ -160,6 +162,7 @@
       .split(/(?<=。)/)
       .map((s) => s.trim())
       .filter(Boolean);
+    const images = rule.images || [];
 
     els.detailBody.innerHTML = `
       <div class="rule-meta">
@@ -171,6 +174,19 @@
       <div class="rule-detail-text">
         ${paragraphs.map((p) => `<p>${highlight(p, terms)}</p>`).join("")}
       </div>
+      ${
+        images.length
+          ? `<div class="rule-images">
+              ${images
+                .map(
+                  (src) => `<a href="${escapeHtml(src)}" target="_blank" rel="noopener">
+                    <img src="${escapeHtml(src)}" alt="添付画像" loading="lazy">
+                  </a>`
+                )
+                .join("")}
+            </div>`
+          : ""
+      }
       <div class="detail-actions">
         <button type="button" id="copy-link-btn">このルールへのリンクをコピー</button>
       </div>
