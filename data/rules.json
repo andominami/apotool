@@ -714,5 +714,17 @@
     "images": [
       "assets/photos/rule-070-1.jpg"
     ]
+  },
+  {
+    "no": 71,
+    "id": "rule-071",
+    "date": "2026/08/31",
+    "category": "歯科技工",
+    "group": "歯科技工",
+    "title": "テスト4【安藤】",
+    "detail": "テスト4です",
+    "images": [
+      "assets/photos/rule-071-1.jpg"
+    ]
   }
 ]
