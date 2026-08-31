@@ -167,6 +167,22 @@ button {
   color: var(--color-accent-dark);
 }
 
+.post-open-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4a3a08;
+  background: var(--color-yellow);
+  box-shadow: 0 2px 6px rgba(139, 175, 60, 0.15);
+}
+
+.post-open-btn:hover {
+  filter: brightness(1.05);
+}
+
 /* ---------- Layout ---------- */
 
 .layout {
@@ -506,6 +522,63 @@ mark {
   background: var(--color-accent-soft);
   border-color: var(--color-accent);
   color: var(--color-accent-dark);
+}
+
+/* ---------- Post password overlay ---------- */
+
+.post-panel {
+  max-width: 380px;
+}
+
+.post-title {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  color: var(--color-text);
+}
+
+.post-desc {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.post-form {
+  display: flex;
+  gap: 8px;
+}
+
+#post-password {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.95rem;
+}
+
+#post-password:focus {
+  outline: 2px solid var(--color-accent-dark);
+  outline-offset: 1px;
+}
+
+.post-form button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-accent-dark);
+}
+
+.post-form button:hover {
+  filter: brightness(1.1);
+}
+
+.post-error {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: #b3261e;
 }
 
 /* ---------- Footer ---------- */

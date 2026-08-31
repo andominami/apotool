@@ -28,6 +28,7 @@
              placeholder="キーワードで検索（例: SPT、パノラマ、健診）">
       <button id="search-clear" type="button" aria-label="検索をクリア">&times;</button>
     </div>
+    <button id="post-open-btn" type="button" class="post-open-btn">✏️ 投稿する</button>
   </div>
 </header>
 
@@ -62,6 +63,20 @@
   <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
     <button id="detail-close" class="detail-close" type="button" aria-label="閉じる">&times;</button>
     <div id="detail-body" class="detail-body"></div>
+  </div>
+</div>
+
+<div id="post-overlay" class="detail-overlay" hidden>
+  <div class="detail-panel post-panel" role="dialog" aria-modal="true" aria-labelledby="post-title">
+    <button id="post-close" class="detail-close" type="button" aria-label="閉じる">&times;</button>
+    <h2 id="post-title" class="post-title">投稿フォームを開く</h2>
+    <p class="post-desc">院内共通のパスワードを入力してください。</p>
+    <form id="post-form" class="post-form" autocomplete="off">
+      <label class="sr-only" for="post-password">パスワード</label>
+      <input id="post-password" type="password" placeholder="パスワード" autocomplete="off">
+      <button type="submit">開く</button>
+    </form>
+    <p id="post-error" class="post-error" hidden>パスワードが違います。</p>
   </div>
 </div>
 
