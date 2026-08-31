@@ -352,6 +352,14 @@ button {
   color: var(--color-text-muted);
 }
 
+.rule-photo-badge {
+  font-size: 0.72rem;
+  color: var(--color-accent-dark);
+  background: var(--color-accent-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
 .rule-title {
   margin: 0 0 6px;
   font-size: 1.03rem;
@@ -450,6 +458,33 @@ mark {
 
 .detail-body .rule-detail-text p {
   margin: 0 0 0.6em;
+}
+
+.rule-images {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.rule-images a {
+  display: block;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.rule-images img {
+  display: block;
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  background: var(--color-bg);
+  transition: transform 0.15s ease;
+}
+
+.rule-images a:hover img {
+  transform: scale(1.05);
 }
 
 .detail-actions {

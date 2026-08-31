@@ -10,6 +10,7 @@
 - 検索語のハイライト表示
 - 各ルールへの直接リンク（`#rule-001` のような URL で共有可能）
 - 新しい順 / 古い順 / No.順の並び替え
+- ルールに写真を添付して一覧・詳細で表示
 
 ## 使い方（ローカル確認）
 
@@ -29,6 +30,7 @@ CORS エラーになります。必ずローカルサーバー経由で確認し
 index.html            サイト本体（1ページのみ）
 assets/style.css       スタイル
 assets/app.js          検索・フィルタ・詳細表示のロジック
+assets/photos/          ルールに添付する写真（xlsxから自動で書き出される）
 data/rules.json         表示用データ（サイトが実際に読み込むファイル）
 data/source.xlsx        元データ（保険算定ルール一覧シート）
 scripts/xlsx_to_json.py  source.xlsx → rules.json の変換スクリプト
@@ -39,6 +41,8 @@ scripts/xlsx_to_json.py  source.xlsx → rules.json の変換スクリプト
 
 1. `data/source.xlsx` の「保険算定ルール一覧」シートに行を追加する
    （列: No / 日付 / カテゴリ / タイトル / 内容(ルール詳細)）。
+   写真を付けたい場合は、その行の「添付画像」列あたりのセルに画像をそのまま
+   貼り付ける（Excelに画像を挿入する操作でOK）。
 2. 変換スクリプトを実行して `data/rules.json` を再生成する。
 
    ```bash
@@ -46,10 +50,18 @@ scripts/xlsx_to_json.py  source.xlsx → rules.json の変換スクリプト
    python3 scripts/xlsx_to_json.py
    ```
 
+   貼り付けた画像は自動で検出され、`assets/photos/` に書き出されたうえで
+   該当ルールの `images` に登録される。
 3. 差分を確認して commit / push する。
 
 `data/rules.json` を直接編集しても構いません（各項目は
-`no`, `id`, `date`, `category`, `group`, `title`, `detail` を持つ JSON 配列です）。
+`no`, `id`, `date`, `category`, `group`, `title`, `detail`, `images` を持つ JSON 配列です。
+`images` はそのルールに紐づく画像ファイルへの相対パスの配列）。
+
+### GitHubの操作に慣れていない場合
+
+Claude（Claude Code）のチャットで「このルールを追加して」と、ルールの文章や
+写真をそのまま送ってもらえれば、代わりにサイトへの反映・公開まで対応できます。
 
 ## GitHub Pages で公開する
 
