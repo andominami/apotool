@@ -320,8 +320,10 @@
     const input = els.postPassword.value;
     const hash = await sha256Hex(input);
     if (hash === POST_PASSWORD_HASH) {
-      window.open(POST_FORM_URL, "_blank", "noopener");
-      closePostOverlay();
+      // 新しいタブで開くと、パスワード照合(非同期処理)を挟んだ直後の
+      // window.open() がスマホのSafari等でポップアップとしてブロックされることがあるため、
+      // 同じタブでフォームへ遷移する(ブラウザの「戻る」でサイトに戻れる)。
+      location.href = POST_FORM_URL;
     } else {
       els.postError.hidden = false;
       els.postPassword.select();
