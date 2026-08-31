@@ -11,7 +11,7 @@
   // 閲覧数カウンター(Google Apps Script Webアプリ)のURL。
   // 未設定(空文字)の間は閲覧数機能を静かに無効化する。
   // セットアップ方法は automation/view-counter-README.md を参照。
-  const VIEW_COUNTER_API_URL = "";
+  const VIEW_COUNTER_API_URL = "https://script.google.com/macros/s/AKfycbx_2WFRtn47ikqtFZQux-O1h8QZUmTkZbtg6d9mGmzGNvUVvrf8wJBGMOuBXB92CwqtzQ/exec";
 
   const state = {
     rules: [],
