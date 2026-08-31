@@ -169,6 +169,13 @@ function uploadPhotos(owner, repo, token, ruleId, photoAnswer) {
 
 /** ドライブのファイルをゴミ箱を経由せず完全に削除する(容量をすぐに解放するため) */
 function permanentlyDeleteDriveFile(fileId) {
+  // DriveAppの書き込み系メソッドを呼んでおくことで、スクリプトの権限スコープに
+  // 書き込み権限が確実に含まれるようにする(このtry自体の成否は問わない)。
+  try {
+    DriveApp.getFileById(fileId).setTrashed(true);
+  } catch (e) {
+    // 既に削除済み・アクセス不可などは無視して次に進む
+  }
   const token = ScriptApp.getOAuthToken();
   UrlFetchApp.fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
     method: "delete",
