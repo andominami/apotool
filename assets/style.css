@@ -197,6 +197,41 @@ button {
   }
 }
 
+/* ---------- View tabs (現在の情報 / アーカイブ) ---------- */
+
+.view-tabs-wrap {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.view-tabs {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 10px 20px 0;
+  display: flex;
+  gap: 6px;
+}
+
+.view-tab {
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-radius: 10px 10px 0 0;
+  border-bottom: 3px solid transparent;
+}
+
+.view-tab:hover {
+  background: var(--color-accent-soft);
+}
+
+.view-tab.active {
+  color: var(--color-accent-dark);
+  border-bottom-color: var(--color-accent-dark);
+}
+
 /* ---------- Layout ---------- */
 
 .layout {

@@ -103,6 +103,7 @@ function onFormSubmit(e) {
       title: fullTitle,
       detail,
       images: paths,
+      archived: false,
     });
 
     putFile(
