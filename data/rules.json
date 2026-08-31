@@ -690,5 +690,17 @@
     "images": [
       "assets/photos/rule-068-1.jpg"
     ]
+  },
+  {
+    "no": 69,
+    "id": "rule-069",
+    "date": "2026/08/31",
+    "category": "歯科技工",
+    "group": "歯科技工",
+    "title": "テスト2【安藤】",
+    "detail": "テスト2です",
+    "images": [
+      "assets/photos/rule-069-1.jpg"
+    ]
   }
 ]
