@@ -175,7 +175,7 @@
 
   function viewCountBadge(rule) {
     if (typeof rule.views !== "number") return "";
-    return `<span class="rule-views">👁 ${rule.views}</span>`;
+    return `<span class="rule-views">閲覧 ${rule.views}</span>`;
   }
 
   function renderList() {
