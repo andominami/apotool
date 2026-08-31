@@ -8,6 +8,11 @@
   const POST_PASSWORD_HASH =
     "66b55e8173b171a6676f99cad64a02a2ed42f78800730cd82b9c8b43eef1993c";
 
+  // 閲覧数カウンター(Google Apps Script Webアプリ)のURL。
+  // 未設定(空文字)の間は閲覧数機能を静かに無効化する。
+  // セットアップ方法は automation/view-counter-README.md を参照。
+  const VIEW_COUNTER_API_URL = "";
+
   const state = {
     rules: [],
     query: "",
@@ -134,6 +139,7 @@
     list = list.slice().sort((a, b) => {
       if (state.sort === "date-asc") return parseDate(a.date) - parseDate(b.date);
       if (state.sort === "no-asc") return a.no - b.no;
+      if (state.sort === "views-desc") return (b.views || 0) - (a.views || 0);
       return parseDate(b.date) - parseDate(a.date); // date-desc (default)
     });
 
@@ -148,6 +154,11 @@
     const start = Math.max(0, idx - 20);
     const prefix = start > 0 ? "…" : "";
     return prefix + rule.detail.slice(start, start + 100);
+  }
+
+  function viewCountBadge(rule) {
+    if (typeof rule.views !== "number") return "";
+    return `<span class="rule-views">👁 ${rule.views}</span>`;
   }
 
   function renderList() {
@@ -174,6 +185,7 @@
               <span class="rule-badge">${escapeHtml(rule.group)}</span>
               <span class="rule-date">${escapeHtml(rule.date || "")}</span>
               ${hasPhoto ? '<span class="rule-photo-badge">📷 写真あり</span>' : ""}
+              ${viewCountBadge(rule)}
             </div>
             <p class="rule-title">${highlight(rule.title, terms)}</p>
             <p class="rule-snippet">${highlight(snippet, terms)}</p>
@@ -195,6 +207,7 @@
       <div class="rule-meta">
         <span class="rule-badge">${escapeHtml(rule.group)}</span>
         <span class="rule-date">${escapeHtml(rule.date || "")}</span>
+        ${viewCountBadge(rule)}
       </div>
       <h2 id="detail-title">${highlight(rule.title, terms)}</h2>
       <p class="rule-no">No.${rule.no} / ${escapeHtml(rule.category)}</p>
@@ -249,6 +262,37 @@
     const rule = state.rules.find((r) => r.id === id);
     if (!rule) return;
     renderDetail(rule);
+    recordView(rule);
+  }
+
+  /** 閲覧数カウンターへ通信し、全ルール分の件数を state.rules へ merge する */
+  async function loadViewCounts() {
+    if (!VIEW_COUNTER_API_URL) return;
+    try {
+      const res = await fetch(`${VIEW_COUNTER_API_URL}?action=counts`);
+      const counts = await res.json();
+      state.rules.forEach((r) => {
+        r.views = counts[r.id] || 0;
+      });
+    } catch (err) {
+      console.error("閲覧数の取得に失敗しました", err);
+    }
+  }
+
+  /** ルールを開いたことをカウンターに記録する(結果を待たず、失敗しても表示には影響させない) */
+  function recordView(rule) {
+    if (!VIEW_COUNTER_API_URL) return;
+    fetch(`${VIEW_COUNTER_API_URL}?action=hit&id=${encodeURIComponent(rule.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.count !== "number") return;
+        rule.views = data.count;
+        // 反映が返ってきた時点でまだそのルールの詳細を開いたままなら、表示も更新する
+        if (!els.overlay.hidden && location.hash.replace(/^#\/?/, "") === rule.id) {
+          renderDetail(rule);
+        }
+      })
+      .catch((err) => console.error("閲覧数の記録に失敗しました", err));
   }
 
   function bindEvents() {
@@ -378,6 +422,8 @@
       console.error(err);
       return;
     }
+
+    await loadViewCounts();
 
     renderSidebar();
     renderList();
