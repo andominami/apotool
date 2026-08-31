@@ -183,6 +183,24 @@ button {
   filter: brightness(1.05);
 }
 
+/* スマホ幅では、タイトルと投稿ボタンを同じ行に、検索欄はその下に全幅で表示する */
+@media (max-width: 700px) {
+  .brand {
+    order: 1;
+  }
+
+  .post-open-btn {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .search-wrap {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
 /* ---------- Layout ---------- */
 
 .layout {
