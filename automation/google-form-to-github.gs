@@ -12,6 +12,11 @@
  *   - 投稿者名                 （記述式・任意）
  *   - 写真                    （ファイルのアップロード・任意）
  *
+ * 写真はGoogleフォームの仕様上、まず投稿者のGoogleドライブ（マイドライブ）に
+ * 保存される。このスクリプトはその画像をGitHubへコピーしたうえで、
+ * ドライブ側のファイルは完全に削除する（マイドライブの容量を圧迫しないため）。
+ * サイトが表示する画像はGitHub上のコピーのみになる。
+ *
  * 使う前に、スクリプトエディタの「プロジェクトの設定」→「スクリプト プロパティ」に
  * 以下を登録しておくこと（コードに直接書かない）:
  *   GITHUB_TOKEN  … リポジトリへの書き込み権限を持つGitHubのアクセストークン
@@ -72,12 +77,18 @@ function onFormSubmit(e) {
   const date = Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy/MM/dd");
   const group = CATEGORIES.includes(category) ? category : "その他";
 
+  // GitHubへのコピーがすべて成功した後にまとめてドライブ側を削除するため、
+  // 削除対象のファイルIDはここに集める(リトライ時は毎回リセットする)。
+  let driveFileIdsToClean = [];
+
   runWithRetry(() => {
+    driveFileIdsToClean = [];
     const { sha, rules } = fetchRulesJson(owner, repo, token);
     const nextNo = rules.reduce((max, r) => Math.max(max, r.no || 0), 0) + 1;
     const id = `rule-${String(nextNo).padStart(3, "0")}`;
 
-    const images = uploadPhotos(owner, repo, token, id, photoAnswer);
+    const { paths, fileIds } = uploadPhotos(owner, repo, token, id, photoAnswer);
+    driveFileIdsToClean = fileIds;
 
     rules.push({
       no: nextNo,
@@ -87,7 +98,7 @@ function onFormSubmit(e) {
       group,
       title: fullTitle,
       detail,
-      images,
+      images: paths,
     });
 
     putFile(
@@ -100,6 +111,10 @@ function onFormSubmit(e) {
       sha
     );
   });
+
+  // サイト側(GitHub)への保存が確定してから、マイドライブの容量を圧迫しないよう
+  // アップロード元ファイルを完全に削除する(ゴミ箱経由だと30日間は容量を消費し続けるため)。
+  driveFileIdsToClean.forEach((fileId) => permanentlyDeleteDriveFile(fileId));
 }
 
 /** data/rules.json の現在の内容とshaを取得する */
@@ -119,11 +134,16 @@ function fetchRulesJson(owner, repo, token) {
   return { sha: meta.sha, rules: JSON.parse(content) };
 }
 
-/** ファイルアップロード質問の回答(DriveのURL、複数はカンマ区切り)から画像をGitHubに書き出す */
+/**
+ * ファイルアップロード質問の回答(DriveのURL、複数はカンマ区切り)から画像をGitHubに書き出す。
+ * 戻り値には、サイトが参照する相対パス一覧(paths)と、
+ * コピー後にドライブから削除すべき元ファイルのID一覧(fileIds)を含める。
+ */
 function uploadPhotos(owner, repo, token, ruleId, photoAnswer) {
-  if (!photoAnswer) return [];
+  if (!photoAnswer) return { paths: [], fileIds: [] };
   const urls = photoAnswer.split(",").map((s) => s.trim()).filter(Boolean);
   const paths = [];
+  const fileIds = [];
   urls.forEach((url, i) => {
     const fileId = extractDriveFileId(url);
     if (!fileId) return;
@@ -142,8 +162,19 @@ function uploadPhotos(owner, repo, token, ruleId, photoAnswer) {
       Utilities.base64Encode(blob.getBytes())
     );
     paths.push(path);
+    fileIds.push(fileId);
   });
-  return paths;
+  return { paths, fileIds };
+}
+
+/** ドライブのファイルをゴミ箱を経由せず完全に削除する(容量をすぐに解放するため) */
+function permanentlyDeleteDriveFile(fileId) {
+  const token = ScriptApp.getOAuthToken();
+  UrlFetchApp.fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+    method: "delete",
+    headers: { Authorization: `Bearer ${token}` },
+    muteHttpExceptions: true,
+  });
 }
 
 /**
