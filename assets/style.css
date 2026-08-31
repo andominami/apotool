@@ -116,11 +116,6 @@ button {
   color: var(--color-text);
 }
 
-.brand-sub {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
 .search-wrap {
   position: relative;
   flex: 1 1 320px;
@@ -192,6 +187,7 @@ button {
   .post-open-btn {
     order: 2;
     margin-left: auto;
+    align-self: flex-start;
   }
 
   .search-wrap {
