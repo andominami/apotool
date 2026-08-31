@@ -426,8 +426,11 @@ button {
 }
 
 .rule-views {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 1px 9px;
 }
 
 .rule-title {
