@@ -14,14 +14,18 @@
  *
  * 写真はGoogleフォームの仕様上、まず投稿者のGoogleドライブ（マイドライブ）に
  * 保存される。このスクリプトはその画像をGitHubへコピーしたうえで、
- * ドライブ側のファイルは完全に削除する（マイドライブの容量を圧迫しないため）。
- * サイトが表示する画像はGitHub上のコピーのみになる。
+ * マイドライブの容量を圧迫しないようドライブ側のファイルを共有ドライブへ移動する
+ * （DRIVE_BACKUP_FOLDER_ID が未設定の場合は、移動の代わりに完全削除する）。
+ * サイトが表示する画像はGitHub上のコピーのみで、ドライブ側はあくまでバックアップ。
  *
  * 使う前に、スクリプトエディタの「プロジェクトの設定」→「スクリプト プロパティ」に
  * 以下を登録しておくこと（コードに直接書かない）:
- *   GITHUB_TOKEN  … リポジトリへの書き込み権限を持つGitHubのアクセストークン
- *   REPO_OWNER    … andominami
- *   REPO_NAME     … tanpopo
+ *   GITHUB_TOKEN          … リポジトリへの書き込み権限を持つGitHubのアクセストークン
+ *   REPO_OWNER            … andominami
+ *   REPO_NAME             … tanpopo
+ *   DRIVE_BACKUP_FOLDER_ID … (任意) 写真の移動先にする共有ドライブ(またはフォルダ)のID。
+ *                             ドライブでそのフォルダを開いたときのURL末尾の文字列。
+ *                             未設定なら移動せず完全削除する。
  */
 
 // サイドバーに表示する大分類。フォームの「カテゴリ」プルダウンと合わせること。
@@ -113,8 +117,16 @@ function onFormSubmit(e) {
   });
 
   // サイト側(GitHub)への保存が確定してから、マイドライブの容量を圧迫しないよう
-  // アップロード元ファイルを完全に削除する(ゴミ箱経由だと30日間は容量を消費し続けるため)。
-  driveFileIdsToClean.forEach((fileId) => permanentlyDeleteDriveFile(fileId));
+  // アップロード元ファイルを片付ける。バックアップ先フォルダの設定があれば
+  // そこへ移動(共有ドライブの容量として扱われる)、無ければ完全に削除する。
+  const backupFolderId = props.getProperty("DRIVE_BACKUP_FOLDER_ID");
+  driveFileIdsToClean.forEach((fileId) => {
+    if (backupFolderId) {
+      moveDriveFileToFolder(fileId, backupFolderId);
+    } else {
+      permanentlyDeleteDriveFile(fileId);
+    }
+  });
 }
 
 /** data/rules.json の現在の内容とshaを取得する */
@@ -165,6 +177,16 @@ function uploadPhotos(owner, repo, token, ruleId, photoAnswer) {
     fileIds.push(fileId);
   });
   return { paths, fileIds };
+}
+
+/**
+ * ドライブのファイルを指定フォルダ(共有ドライブでも可)へ移動する。
+ * マイドライブから外れるので、個人の容量からは消費しなくなる。
+ */
+function moveDriveFileToFolder(fileId, destFolderId) {
+  const file = DriveApp.getFileById(fileId);
+  const destFolder = DriveApp.getFolderById(destFolderId);
+  file.moveTo(destFolder);
 }
 
 /** ドライブのファイルをゴミ箱を経由せず完全に削除する(容量をすぐに解放するため) */
