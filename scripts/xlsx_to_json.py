@@ -13,7 +13,6 @@ data/source.xlsx (保険算定ルール一覧シート) を data/rules.json に�
 assets/photos/ に書き出したうえで rules.json の "images" に登録します。
 """
 import json
-import re
 from pathlib import Path
 
 import openpyxl
@@ -23,27 +22,18 @@ SRC = ROOT / "data" / "source.xlsx"
 DST = ROOT / "data" / "rules.json"
 PHOTOS_DIR = ROOT / "assets" / "photos"
 
-# カテゴリ表記のゆれをまとめて、サイドバーで使う大分類にするためのルール
-GROUP_OVERRIDES = {
-    "レセプト・カルテ運用": "レセプト・カルテ",
-    "健診→治療移行の入力": "健診",
-    "健診→歯管の算定": "健診",
-    "健診→治療開始日": "健診",
-    "健診→初再診料": "健診",
-    "文書算定": "文書",
-}
-
-# 1件しかない大分類は「その他」にまとめる
-MERGE_TO_OTHER_THRESHOLD = 2
-
-
-def base_group(category: str) -> str:
-    if category in GROUP_OVERRIDES:
-        return GROUP_OVERRIDES[category]
-    # 「(」や「→」より前をグループ名とする
-    m = re.match(r"^([^(（→]+)", category)
-    name = m.group(1).strip() if m else category
-    return GROUP_OVERRIDES.get(name, name)
+# サイドバー(カテゴリ)に表示する大分類。Googleフォームのプルダウンと合わせること。
+CATEGORIES = [
+    "カルテ入力",
+    "P処置",
+    "検診",
+    "バイオ",
+    "レントゲン",
+    "技工",
+    "制度改定",
+    "文書",
+    "その他",
+]
 
 
 def slugify(no: int) -> str:
@@ -72,22 +62,29 @@ def write_rule_images(rule_no: int, images: list) -> list:
     return paths
 
 
-def load_existing_archived_flags() -> dict:
-    """既存のrules.jsonから、ルールNoごとのarchived状態を読み取る(再生成時に維持するため)。"""
+def load_existing_rule_state() -> dict:
+    """既存のrules.jsonから、ルールNoごとのarchived状態とカテゴリ(group)を読み取る
+    (再生成時に維持するため。カテゴリは自動判定せず、手動で割り振ったものを引き継ぐ)。"""
     if not DST.exists():
         return {}
     try:
         existing = json.loads(DST.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {}
-    return {r["no"]: bool(r.get("archived", False)) for r in existing}
+    return {
+        r["no"]: {
+            "archived": bool(r.get("archived", False)),
+            "group": r.get("group", ""),
+        }
+        for r in existing
+    }
 
 
 def main() -> None:
     wb = openpyxl.load_workbook(SRC, data_only=True)
     ws = wb["保険算定ルール一覧"]
     images_by_rule = extract_images_by_rule(ws)
-    archived_flags = load_existing_archived_flags()
+    existing_state = load_existing_rule_state()
 
     rows = []
     for row in ws.iter_rows(min_row=2, values_only=True):
@@ -99,29 +96,25 @@ def main() -> None:
         title = (title or "").strip()
         detail = (detail or "").strip()
         images = write_rule_images(no, images_by_rule.get(no, []))
+        prev = existing_state.get(no, {})
+        # 新規行(rules.jsonにまだ無いNo.)はいったん「その他」にしておき、
+        # 後で手動でカテゴリを割り振ってもらう想定。
+        group = prev.get("group") or "その他"
         rows.append(
             {
                 "no": no,
                 "id": slugify(no),
                 "date": str(date).strip() if date else "",
                 "category": category,
-                "group": base_group(category),
+                "group": group,
                 "title": title,
                 "detail": detail,
                 "images": images,
                 # data/rules.json 上で直接archivedをtrueにしたルールは、
                 # このスクリプトを再実行してもアーカイブ状態を維持する。
-                "archived": archived_flags.get(no, False),
+                "archived": prev.get("archived", False),
             }
         )
-
-    # グループの出現回数を数え、少数派グループは「その他」に統合する
-    counts = {}
-    for r in rows:
-        counts[r["group"]] = counts.get(r["group"], 0) + 1
-    for r in rows:
-        if counts[r["group"]] < MERGE_TO_OTHER_THRESHOLD:
-            r["group"] = "その他"
 
     rows.sort(key=lambda r: r["no"])
 

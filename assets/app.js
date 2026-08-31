@@ -13,6 +13,19 @@
   // セットアップ方法は automation/view-counter-README.md を参照。
   const VIEW_COUNTER_API_URL = "https://script.google.com/macros/s/AKfycbx_2WFRtn47ikqtFZQux-O1h8QZUmTkZbtg6d9mGmzGNvUVvrf8wJBGMOuBXB92CwqtzQ/exec";
 
+  // サイドバー(カテゴリ)の固定表示順。Googleフォームのプルダウンと合わせること。
+  const CATEGORY_ORDER = [
+    "カルテ入力",
+    "P処置",
+    "検診",
+    "バイオ",
+    "レントゲン",
+    "技工",
+    "制度改定",
+    "文書",
+    "その他",
+  ];
+
   const state = {
     rules: [],
     query: "",
@@ -98,8 +111,12 @@
   function computeGroups(rules) {
     const counts = new Map();
     rules.forEach((r) => counts.set(r.group, (counts.get(r.group) || 0) + 1));
-    const groups = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-    return groups;
+    // 定義済みカテゴリは固定順(件数0でも表示)、それ以外(未分類データ)は末尾に件数順で表示
+    const known = CATEGORY_ORDER.map((name) => [name, counts.get(name) || 0]);
+    const rest = Array.from(counts.entries())
+      .filter(([name]) => !CATEGORY_ORDER.includes(name))
+      .sort((a, b) => b[1] - a[1]);
+    return [...known, ...rest];
   }
 
   // 現在の表示モード(現在の情報 / アーカイブ)で絞り込んだルール一覧
