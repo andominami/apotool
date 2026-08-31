@@ -1,6 +1,13 @@
 (() => {
   "use strict";
 
+  // 投稿フォームの簡易パスワード保護。
+  // ※クライアント側だけのチェックのため、詳しい人には回避され得る簡易的な鍵です。
+  const POST_FORM_URL =
+    "https://docs.google.com/forms/d/e/1FAIpQLSfD0SRJTTP10VZE7EXKJAajHBubjdcSkEqREyyBlnC46_aUCw/viewform";
+  const POST_PASSWORD_HASH =
+    "66b55e8173b171a6676f99cad64a02a2ed42f78800730cd82b9c8b43eef1993c";
+
   const state = {
     rules: [],
     groups: [],
@@ -20,6 +27,12 @@
     overlay: document.getElementById("detail-overlay"),
     detailBody: document.getElementById("detail-body"),
     detailClose: document.getElementById("detail-close"),
+    postOpenBtn: document.getElementById("post-open-btn"),
+    postOverlay: document.getElementById("post-overlay"),
+    postClose: document.getElementById("post-close"),
+    postForm: document.getElementById("post-form"),
+    postPassword: document.getElementById("post-password"),
+    postError: document.getElementById("post-error"),
   };
 
   function parseDate(d) {
@@ -269,6 +282,50 @@
     });
 
     window.addEventListener("hashchange", handleHash);
+
+    els.postOpenBtn.addEventListener("click", openPostOverlay);
+    els.postClose.addEventListener("click", closePostOverlay);
+    els.postOverlay.addEventListener("click", (e) => {
+      if (e.target === els.postOverlay) closePostOverlay();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !els.postOverlay.hidden) closePostOverlay();
+    });
+    els.postForm.addEventListener("submit", handlePostSubmit);
+  }
+
+  function openPostOverlay() {
+    els.postOverlay.hidden = false;
+    els.postError.hidden = true;
+    els.postPassword.value = "";
+    document.body.style.overflow = "hidden";
+    els.postPassword.focus();
+  }
+
+  function closePostOverlay() {
+    els.postOverlay.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  async function sha256Hex(text) {
+    const bytes = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  async function handlePostSubmit(e) {
+    e.preventDefault();
+    const input = els.postPassword.value;
+    const hash = await sha256Hex(input);
+    if (hash === POST_PASSWORD_HASH) {
+      window.open(POST_FORM_URL, "_blank", "noopener");
+      closePostOverlay();
+    } else {
+      els.postError.hidden = false;
+      els.postPassword.select();
+    }
   }
 
   function handleHash() {
