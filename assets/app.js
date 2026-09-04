@@ -196,12 +196,14 @@
       .map((rule) => {
         const snippet = snippetFor(rule, terms);
         const hasPhoto = rule.images && rule.images.length > 0;
+        const hasFile = rule.files && rule.files.length > 0;
         return `<li class="rule-card">
           <button type="button" class="rule-card-btn" data-id="${rule.id}">
             <div class="rule-meta">
               <span class="rule-badge">${escapeHtml(rule.group)}</span>
               <span class="rule-date">${escapeHtml(rule.date || "")}</span>
               ${hasPhoto ? '<span class="rule-photo-badge">📷 写真あり</span>' : ""}
+              ${hasFile ? '<span class="rule-file-badge">📄 ファイルあり</span>' : ""}
               ${viewCountBadge(rule)}
             </div>
             <p class="rule-title">${highlight(rule.title, terms)}</p>
@@ -219,6 +221,7 @@
       .map((s) => s.trim())
       .filter(Boolean);
     const images = rule.images || [];
+    const files = rule.files || [];
 
     els.detailBody.innerHTML = `
       <div class="rule-meta">
@@ -238,6 +241,19 @@
                 .map(
                   (src) => `<a href="${escapeHtml(src)}" target="_blank" rel="noopener">
                     <img src="${escapeHtml(src)}" alt="添付画像" loading="lazy">
+                  </a>`
+                )
+                .join("")}
+            </div>`
+          : ""
+      }
+      ${
+        files.length
+          ? `<div class="rule-files">
+              ${files
+                .map(
+                  (f) => `<a class="rule-file-link" href="${escapeHtml(f.path)}" download="${escapeHtml(f.name)}">
+                    📄 ${escapeHtml(f.name)} をダウンロード
                   </a>`
                 )
                 .join("")}

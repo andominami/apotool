@@ -11,6 +11,7 @@
 - 各ルールへの直接リンク（`#rule-001` のような URL で共有可能）
 - 新しい順 / 古い順 / No.順 / 閲覧数順の並び替え
 - ルールに写真を添付して一覧・詳細で表示
+- ルールにWord/PDFなどのファイル（様式・テンプレート等）を添付してダウンロードボタンを表示
 - 「現在の情報」と「アーカイブ」をタブで切り替え表示
 - ルールごとの閲覧数を記録・表示（要セットアップ）
 
@@ -57,9 +58,14 @@ scripts/xlsx_to_json.py  source.xlsx → rules.json の変換スクリプト
 3. 差分を確認して commit / push する。
 
 `data/rules.json` を直接編集しても構いません（各項目は
-`no`, `id`, `date`, `category`, `group`, `title`, `detail`, `images`, `archived` を持つ
+`no`, `id`, `date`, `category`, `group`, `title`, `detail`, `images`, `files`, `archived` を持つ
 JSON 配列です。`images` はそのルールに紐づく画像ファイルへの相対パスの配列、
+`files` はダウンロード用に添付するファイル（Word/PDFの様式など）の配列で、
+各要素は `{"name": "表示名.docx", "path": "assets/documents/xxx.docx"}` の形、
 `archived` は下記の「アーカイブ」に表示するかどうかのフラグです）。
+
+添付ファイルの実体は `assets/documents/` に置きます（写真が `assets/photos/` に
+置かれるのと同じ考え方です）。
 
 ### 古くなったルールをアーカイブする
 
